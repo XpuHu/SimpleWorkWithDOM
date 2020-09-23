@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
             "Одержимость",
             "Скотт Пилигрим против...",
             "Ангелы"
-        ]
+        ],
     };
 
     const advertismentBlock = document.querySelector('.promo__adv'),
@@ -37,75 +37,80 @@ document.addEventListener('DOMContentLoaded', () => {
         checkbox = addingMovieForm.querySelector('input[type="checkbox"]'),
         addingMovieInput = addingMovieForm.querySelector('.adding__input');
 
-    // let deleteMovieBtns = movieList.querySelectorAll('.delete');
+    const sortMovies = (movies) => {
+        const sortedMovies = movies.map((movie) => {
+            return movie.toUpperCase();
+        }).sort();
+        return sortedMovies;
+    };
 
-    advertismentBlock.innerHTML = '';
-    filmGenre.textContent = 'ДРАМА';
-    poster.style.backgroundImage = "url('img/bg.jpg')";
-    setMovieList();
+    const getDeleteBtns = (itemsList) => {
+        return itemsList.querySelectorAll('.delete');
+    };
 
-    addingMovieForm.addEventListener('submit', addNewMovie);
+    const deleteMovie = (event) => {
+        const deleteBtn = event.target;
+        const deleteMovieItem = deleteBtn.parentElement.textContent.trim().slice(3);
+        const sortedMovies = sortMovies(movieDB.movies);
 
-    function addNewMovie(event) {
-        event.preventDefault();
+        const deleteMovieIndex = sortedMovies.indexOf(deleteMovieItem);
 
-        const newMovie = addingMovieInput.value;
-        const favorite = checkbox.checked;
-
-        if (newMovie.length > 0) {
-            movieDB.movies.push(checkMovieTitleLength(newMovie));
-            setMovieList(movieDB.movies);
-
-            if (favorite === true) {
-                console.log("Добавляем любимый фильм");
-                checkbox.checked = false;
-            }
-
-            addingMovieInput.value = '';
-        }
-    }
-
-    function deleteMovie() {
-        const deleteMovieItem = this.parentElement.textContent.trim().slice(3);
-
-        const deleteMovieIndex = movieDB.movies.indexOf(deleteMovieItem);
-
-        const startMovieList = movieDB.movies.slice(0, deleteMovieIndex);
-        const endMovieList = movieDB.movies.slice(deleteMovieIndex + 1, movieDB.movies.length);
+        const startMovieList = sortedMovies.slice(0, deleteMovieIndex);
+        const endMovieList = sortedMovies.slice(deleteMovieIndex + 1, movieDB.movies.length);
 
         movieDB.movies = [...startMovieList, ...endMovieList];
 
-        setMovieList(movieDB.movies);
-    }
+        showMovieList(movieDB.movies, movieList);
+    };
 
-
-    function setMovieList() {
-        movieList.innerHTML = '';
-        const sortedMovies = movieDB.movies.map((movie) => {
-            return movie.toUpperCase();
-        }).sort();
+    function showMovieList(movies, parent) {
+        parent.innerHTML = '';
+        const sortedMovies = sortMovies(movies);
 
         sortedMovies.forEach((movie, i) => {
-            movieList.innerHTML += `
+            parent.innerHTML += `
                 <li class='promo__interactive-item'>
                     ${i + 1}. ${movie}
                     <div class="delete"></div>
                 </li>`;
         });
 
-        const deleteMovieBtns = movieList.querySelectorAll('.delete');
+        const deleteMovieBtns = getDeleteBtns(parent);
         deleteMovieBtns.forEach((button) => {
             button.addEventListener('click', deleteMovie);
         });
-
-        movieDB.movies = sortedMovies;
     }
 
+    function addNewMovie(event, movies, parent) {
+        event.preventDefault();
+
+        const newMovie = addingMovieInput.value;
+        const favorite = checkbox.checked;
+
+        if (newMovie) {
+            movies.push(checkMovieTitleLength(newMovie));
+            showMovieList(movies, parent);
+
+            if (favorite) {
+                console.log("Добавляем любимый фильм");
+            }
+
+            event.target.reset();
+        }
+    }
+    
     function checkMovieTitleLength(movieTitle) {
         if (movieTitle.length > 21) {
-            movieTitle = movieTitle.substr(0, 21) + '...';
+            movieTitle = `${movieTitle.substr(0, 21)}...`;
         }
 
         return movieTitle;
     }
+
+    advertismentBlock.innerHTML = '';
+    filmGenre.textContent = 'ДРАМА';
+    poster.style.backgroundImage = "url('img/bg.jpg')";
+    showMovieList(movieDB.movies, movieList);
+
+    addingMovieForm.addEventListener('submit', (e) => addNewMovie(e, movieDB.movies, movieList));
 });
